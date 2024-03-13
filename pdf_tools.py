@@ -64,6 +64,8 @@ def process_delete_input(pages_to_delete_str: str) -> list:
     for x in pages_to_delete_list:
         result.append(int(x))
 
+    print(result)
+
     return result
 
 # Function for delete pages dialouge
@@ -80,17 +82,24 @@ def delete_pages(pdf_in: PyPDF2.PdfFileReader):
     pages_to_delete_int = process_delete_input(pages_to_delete_str)
 
     page_num = 1
-    del_indx = 0
-
+    
     for page in pdf_in.pages:
 
-        if page_num != pages_to_delete_int[del_indx]:
-            pdf_writer.add_page(page)
+        if len(pages_to_delete_int) == 0:
+            print("Adding page " + str(page_num))
+        
         else:
-            del_indx += 1
+            page_num_to_delete = pages_to_delete_int[0]
+            pages_to_delete_int.pop(0)
 
-    with open('new_file.pdf', 'wb') as f:
-        pdf_writer.write(f)
+            if page_num != page_num_to_delete:
+                print("Adding page " + str(page_num))
+        
+        page_num += 1
+                
+
+    #with open('new_file.pdf', 'wb') as f:
+        #pdf_writer.write(f)
 
     
 
