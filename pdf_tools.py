@@ -6,6 +6,7 @@ from tkinter import messagebox
 from tkinter import ttk
 from tkinter import simpledialog
 from pathlib import Path
+import queue
 import PyPDF2
 
 # Function to be called when the button is clicked
@@ -19,14 +20,16 @@ def del_on_button_click() -> None:
     # Open the PDF file with open_pdf function and create a reader object
     pdf_file = open_pdf(pdf_path)
 
-    # Create a reader object from the file
-    pdf_file_reader_in = PyPDF2.PdfReader(pdf_file)
+    # If pdf file exists, continue
+    if pdf_file != None:
+        # Create a reader object from the file
+        pdf_file_reader_in = PyPDF2.PdfReader(pdf_file)
 
-    # Call Delete pages function
-    delete_pages(pdf_file_reader_in)
+        # Call Delete pages function
+        delete_pages(pdf_file_reader_in)
 
-    # Close the file
-    pdf_file.close()
+        # Close the file
+        pdf_file.close()
     
 # Function to open a PDF file  
 def open_pdf(pdf_path: Path):
@@ -59,12 +62,10 @@ def open_pdf(pdf_path: Path):
 def process_delete_input(pages_to_delete_str: str) -> list:
     pages_to_delete_list = pages_to_delete_str.split(",")
 
-    result = []
+    result = queue.Queue()
     
     for x in pages_to_delete_list:
-        result.append(int(x))
-
-    print(result)
+        result.put(int(x))
 
     return result
 
@@ -83,23 +84,30 @@ def delete_pages(pdf_in: PyPDF2.PdfFileReader):
 
     page_num = 1
     
-    for page in pdf_in.pages:
+    for page in pdf_in_list:
 
-        if len(pages_to_delete_int) == 0:
+        # If pages_to_delete_int is empty, go ahead and add page
+        if pages_to_delete_int.empty():
             print("Adding page " + str(page_num))
-        
-        else:
-            page_num_to_delete = pages_to_delete_int[0]
-            pages_to_delete_int.pop(0)
+            pdf_writer.add_page(page)
 
-            if page_num != page_num_to_delete:
+
+        # If pages_to_delete_int is not empty, check the head to see if page should be added
+        else:
+            # Do not add page if it is in pages_to_delete_int
+            if page_num != pages_to_delete_int.queue[0]:
                 print("Adding page " + str(page_num))
+                pdf_writer.add_page(page)
+            # dequeue
+            else:
+                pages_to_delete_int.get()
         
+        # Increment page number
         page_num += 1
                 
-
-    #with open('new_file.pdf', 'wb') as f:
-        #pdf_writer.write(f)
+    # save the new pdf file
+    with open('new_file.pdf', 'wb') as f:
+        pdf_writer.write(f)
 
     
 
