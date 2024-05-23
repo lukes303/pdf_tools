@@ -79,6 +79,16 @@ def delete_pages(pdf_in: PyPDF2.PdfFileReader):
         with open('new_file.pdf', 'wb') as f:
             pdf_writer.write(f)
 
+# Function for processing delete window input
+def process_delete_input(pages_to_delete_str: str) -> list:
+    pages_to_delete_list = pages_to_delete_str.split(",")
+
+    result = queue.Queue()
+    
+    for x in pages_to_delete_list:
+        result.put(int(x))
+
+    return result
 
 # Function to be called when the button is clicked
 def del_on_button_click() -> None:
@@ -101,21 +111,6 @@ def del_on_button_click() -> None:
 
         # Close the file
         pdf_file.close()
-
-    
-
-# Function for processing delete window input
-def process_delete_input(pages_to_delete_str: str) -> list:
-    pages_to_delete_list = pages_to_delete_str.split(",")
-
-    result = queue.Queue()
-    
-    for x in pages_to_delete_list:
-        result.put(int(x))
-
-    
-
-    return result
 
 
 # Create the main window
