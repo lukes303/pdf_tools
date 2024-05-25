@@ -7,6 +7,7 @@ from tkinter import ttk
 from tkinter import simpledialog
 from pathlib import Path
 import queue
+import re
 import PyPDF2
 
 # Function to open a PDF file  
@@ -45,50 +46,138 @@ def delete_pages(pdf_in: PyPDF2.PdfFileReader):
     pdf_writer = PyPDF2.PdfWriter()
 
     # Open Options Dialouge
-    pages_to_delete_str = simpledialog.askstring("Delete Pages", "Enter the pages to delete separated by commas, no spaces")
+    pages_to_delete_str = simpledialog.askstring("Delete Pages", "Enter the pages or page range to delete separated by commas, no spaces.")
 
-    # If the user actually input something, continue
-    if pages_to_delete_str is not None and pages_to_delete_str != "":
+    # If nothing is entered, do not continue
+    if pages_to_delete_str is None or pages_to_delete_str == "":
+        return
 
-        pages_to_delete_int = process_delete_input(pages_to_delete_str)
+    # If there is input, process into a list of strings
+    pages_to_delete_str_list = delete_input_to_str_list(pages_to_delete_str)
 
-        page_num = 1
+    # Turn list of strings into a usable, sorted list of integers 
+    pages_to_delete_int_list = strlist_to_intlist(pages_to_delete_str_list, len(pdf_in_list))
+
+    # page_num = 1
     
-        for page in pdf_in_list:
+    # for page in pdf_in_list:
 
-            # If pages_to_delete_int is empty, go ahead and add page
-            if pages_to_delete_int.empty():
-                print("Adding page " + str(page_num))
-                pdf_writer.add_page(page)
+    #     # If pages_to_delete_processed is empty, go ahead and add page
+    #     if pages_to_delete_processed.empty():
+    #         print("Adding page " + str(page_num))
+    #         pdf_writer.add_page(page)
 
 
-            # If pages_to_delete_int is not empty, check the head to see if page should be added
-            else:
-                # Do not add page if it is in pages_to_delete_int
-                if page_num != pages_to_delete_int.queue[0]:
-                    print("Adding page " + str(page_num))
-                    pdf_writer.add_page(page)
-                # dequeue
-                else:
-                    pages_to_delete_int.get()
+    #     # If pages_to_delete_int is not empty, check the head to see if page should be added
+    #     else:
+    #         # Do not add page if it is in pages_to_delete_int
+    #         if page_num != pages_to_delete_processed.queue[0]:
+    #             print("Adding page " + str(page_num))
+    #             pdf_writer.add_page(page)
+    #         # dequeue
+    #         else:
+    #             pages_to_delete_processed.get()
         
-            # Increment page number
-            page_num += 1
+    #     # Increment page number
+    #     page_num += 1
                 
-        # save the new pdf file
-        with open('new_file.pdf', 'wb') as f:
-            pdf_writer.write(f)
+    # # save the new pdf file
+    # with open('new_file.pdf', 'wb') as f:
+    #     pdf_writer.write(f)
 
-# Function for processing delete window input
-def process_delete_input(pages_to_delete_str: str) -> list:
+# Function for turning delete input into a list of strings
+def delete_input_to_str_list(pages_to_delete_str: str) -> list:
     pages_to_delete_list = pages_to_delete_str.split(",")
 
-    result = queue.Queue()
+    result = []
     
     for x in pages_to_delete_list:
-        result.put(int(x))
+        result.append(x)
 
     return result
+
+# Turn list of strings into a usable, sorted list of integers in ascending order
+# Returns an null if any input is invalid
+# Input is valid if:
+# Input consits of a single integer ex: 1, 5, 99
+# Input consits of a range in ascending order where the lower bound != the upper bound ex: 1-5, 7-8
+# In any other senario, input is invalid and an empty list is returned
+def strlist_to_intlist(pages_to_delete_str_list: str, totalPages: int) -> list:
+
+    range_pattern = r'^\d+-\d+$'
+
+    result = []
+
+    # Check if the current input mathces the range format ex: 1-5
+    for currInput in pages_to_delete_str_list:
+        
+        # If the input is in range format
+        if re.match(range_pattern, currInput):
+            print("Range Format")
+            print("Lower: " + currInput[0])
+            print("Upper: " + currInput[-1])
+
+            # Cast the lower and upper bounds into ints
+            lower_bound = int(currInput[0])
+            upper_bound = int(currInput[-1])
+
+            # lower_bound must be lower than upper bound
+            if lower_bound >= upper_bound:
+                messagebox.showerror("Error", "Inavlid Range")
+                return None
+            
+            # Input range is valid, append each number in range to result list
+            for i in range(lower_bound, upper_bound+1):
+                
+                # If there is a duplicate page number, throw error and return none
+                if i in result:
+                    messagebox.showerror("Error", "Invalid Input")
+                    return None
+                
+                # Input is valid, add to result
+                result.append(i)
+                print("Adding " + str(i))
+           
+        # If the input is in single page number format
+        else:
+            print("Single Page format")
+
+            # Attempt to cast the string into an int
+            try:
+                page_number = int(currInput)
+            # Invalid input if string is not convertable to int
+            except ValueError:
+                messagebox.showerror("Error", "Inavlid Input")
+                return None
+            else:
+                # Invalid input if there is a duplicate number 
+                if page_number in result:
+                    messagebox.showerror("Error", "Inavlid Input")
+                    return None
+                # Valid input, add to result
+                else:
+                    result.append(page_number)
+                    print("Adding " + str(page_number))
+    
+    # Sort list
+    result.sort()
+
+    # Check if each i is in a valid range valid [1,last_page_number]
+    for i in result:
+        if i <= 0:
+            messagebox.showerror("Error", "Inavlid Input")
+            return None
+        elif i > totalPages:
+            messagebox.showerror("Error", "Inavlid Input")
+            return None
+        
+    # Debug
+    print("Result")
+    for x in result:
+        print(x)
+
+    return result
+
 
 # Function to be called when the button is clicked
 def del_on_button_click() -> None:
