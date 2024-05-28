@@ -20,17 +20,17 @@ def open_pdf(pdf_path: Path):
 
     # Check if the file is a PDF
     if ext != '.pdf':
-        messagebox.showerror("Error", "File must be a PDF!")
+        messagebox.showwarning("Warning", "File must be a PDF!")
         return
     
     # Open the PDF file
     try:
         pdf_file = open(pdf_path_string, 'rb')
     except FileNotFoundError:
-        messagebox.showerror("Error", "File not found")
+        messagebox.showwarning("Warning", "File not found!")
         return
     except PermissionError:
-        messagebox.showerror("Error", "Permission denied")
+        messagebox.showwarning("Warning", "Permission denied!")
         return
     else:
         print('PDF file opened')
@@ -58,32 +58,37 @@ def delete_pages(pdf_in: PyPDF2.PdfFileReader):
     # Turn list of strings into a usable, sorted list of integers 
     pages_to_delete_int_list = strlist_to_intlist(pages_to_delete_str_list, len(pdf_in_list))
 
-    # page_num = 1
+    if pages_to_delete_int_list == None:
+        return
     
-    # for page in pdf_in_list:
+    print("Deleting Pages")
 
-    #     # If pages_to_delete_processed is empty, go ahead and add page
-    #     if pages_to_delete_processed.empty():
-    #         print("Adding page " + str(page_num))
-    #         pdf_writer.add_page(page)
+    page_num = 1
+    
+    for page in pdf_in_list:
+
+        # If pages_to_delete_int_list is empty, go ahead and add page
+        if pages_to_delete_int_list == []:
+            print("Adding page " + str(page_num))
+            pdf_writer.add_page(page)
 
 
-    #     # If pages_to_delete_int is not empty, check the head to see if page should be added
-    #     else:
-    #         # Do not add page if it is in pages_to_delete_int
-    #         if page_num != pages_to_delete_processed.queue[0]:
-    #             print("Adding page " + str(page_num))
-    #             pdf_writer.add_page(page)
-    #         # dequeue
-    #         else:
-    #             pages_to_delete_processed.get()
+        # If pages_to_delete_int is not empty, check the head to see if page should be added
+        else:
+            # Do not add page if it is in pages_to_delete_int
+            if page_num != pages_to_delete_int_list[0]:
+                print("Adding page " + str(page_num))
+                pdf_writer.add_page(page)
+            # Remove first element in list
+            else:
+                pages_to_delete_int_list.pop(0)
         
-    #     # Increment page number
-    #     page_num += 1
+        # Increment page number
+        page_num += 1
                 
-    # # save the new pdf file
-    # with open('new_file.pdf', 'wb') as f:
-    #     pdf_writer.write(f)
+    # save the new pdf file
+    with open('new_file.pdf', 'wb') as f:
+        pdf_writer.write(f)
 
 # Function for turning delete input into a list of strings
 def delete_input_to_str_list(pages_to_delete_str: str) -> list:
@@ -123,7 +128,7 @@ def strlist_to_intlist(pages_to_delete_str_list: str, totalPages: int) -> list:
 
             # lower_bound must be lower than upper bound
             if lower_bound >= upper_bound:
-                messagebox.showerror("Error", "Inavlid Range")
+                messagebox.showwarning("Warning", "Invalid Input!")
                 return None
             
             # Input range is valid, append each number in range to result list
@@ -131,7 +136,7 @@ def strlist_to_intlist(pages_to_delete_str_list: str, totalPages: int) -> list:
                 
                 # If there is a duplicate page number, throw error and return none
                 if i in result:
-                    messagebox.showerror("Error", "Invalid Input")
+                    messagebox.showwarning("Warning", "Invalid Input!")
                     return None
                 
                 # Input is valid, add to result
@@ -147,12 +152,12 @@ def strlist_to_intlist(pages_to_delete_str_list: str, totalPages: int) -> list:
                 page_number = int(currInput)
             # Invalid input if string is not convertable to int
             except ValueError:
-                messagebox.showerror("Error", "Inavlid Input")
+                messagebox.showwarning("Warning", "Invalid Input!")
                 return None
             else:
                 # Invalid input if there is a duplicate number 
                 if page_number in result:
-                    messagebox.showerror("Error", "Inavlid Input")
+                    messagebox.showwarning("Warning", "Invalid Input!")
                     return None
                 # Valid input, add to result
                 else:
@@ -165,10 +170,10 @@ def strlist_to_intlist(pages_to_delete_str_list: str, totalPages: int) -> list:
     # Check if each i is in a valid range valid [1,last_page_number]
     for i in result:
         if i <= 0:
-            messagebox.showerror("Error", "Inavlid Input")
+            messagebox.showwarning("Warning", "Invalid Input!")
             return None
         elif i > totalPages:
-            messagebox.showerror("Error", "Inavlid Input")
+            messagebox.showwarning("Warning", "Invalid Input!")
             return None
         
     # Debug
