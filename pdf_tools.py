@@ -1,12 +1,12 @@
 # Import modules
 import os
 import tkinter as tk
+from tkinter import filedialog
 from tkinter.filedialog import askopenfilename
 from tkinter import messagebox
 from tkinter import ttk
 from tkinter import simpledialog
 from pathlib import Path
-import queue
 import re
 import PyPDF2
 
@@ -38,7 +38,7 @@ def open_pdf(pdf_path: Path):
     return pdf_file
 
 # Function for delete pages dialouge
-def delete_pages(pdf_in: PyPDF2.PdfFileReader):
+def delete_pages(pdf_in: PyPDF2.PdfFileReader, new_file_path: str):
 
     pdf_in_list = pdf_in.pages
 
@@ -61,6 +61,7 @@ def delete_pages(pdf_in: PyPDF2.PdfFileReader):
     if pages_to_delete_int_list == None:
         return
     
+
     print("Deleting Pages")
 
     page_num = 1
@@ -87,7 +88,7 @@ def delete_pages(pdf_in: PyPDF2.PdfFileReader):
         page_num += 1
                 
     # save the new pdf file
-    with open('new_file.pdf', 'wb') as f:
+    with open(new_file_path, 'wb') as f:
         pdf_writer.write(f)
 
 # Function for turning delete input into a list of strings
@@ -187,6 +188,7 @@ def strlist_to_intlist(pages_to_delete_str_list: str, totalPages: int) -> list:
 # Function to be called when the button is clicked
 def del_on_button_click() -> None:
     # Show an "Open" dialog box and return the path to the selected file
+    print('Asking for PDF file')
     pdf_path_string = askopenfilename()
 
     # Create a Path object from the string
@@ -195,16 +197,26 @@ def del_on_button_click() -> None:
     # Open the PDF file with open_pdf function and create a reader object
     pdf_file = open_pdf(pdf_path)
 
-    # If pdf file exists, continue
-    if pdf_file != None:
-        # Create a reader object from the file
-        pdf_file_reader_in = PyPDF2.PdfReader(pdf_file)
+    # If there is no file, return
+    if pdf_file == None:
+        return
 
-        # Call Delete pages function
-        delete_pages(pdf_file_reader_in)
+    # Prompt the user for a save location and filename
+    print('Asking for new location to save new file to')
+    new_file_path = filedialog.asksaveasfilename(initialfile=".pdf", defaultextension=".pdf", filetypes=[("PDF Files", "*.pdf")])
 
-        # Close the file
-        pdf_file.close()
+    # If user presses cancel, return
+    if not new_file_path:
+        return
+
+    # Create a reader object from the file
+    pdf_file_reader_in = PyPDF2.PdfReader(pdf_file)
+
+    # Call Delete pages function
+    delete_pages(pdf_file_reader_in, new_file_path)
+
+    # Close the file
+    pdf_file.close()
 
 
 # Create the main window
