@@ -184,9 +184,9 @@ def strlist_to_intlist(pages_to_delete_str_list: str, totalPages: int) -> list:
 
     return result
 
-
-# Function to be called when the button is clicked
+# Function to be called when the delete button is clicked
 def del_on_button_click() -> None:
+    print('Delete PDFs selected')
     # Show an "Open" dialog box and return the path to the selected file
     print('Asking for PDF file')
     pdf_path_string = askopenfilename()
@@ -218,20 +218,82 @@ def del_on_button_click() -> None:
     # Close the file
     pdf_file.close()
 
+# Function for choosing and adding pdf to merge instance
+def add_pdf_on_click(merger: PyPDF2.PdfMerger) -> None:
+    
+    # Let user choose pdf
+    pdf_path_string = askopenfilename()
+
+    # Turn path string into path object
+    pdf_file_path = Path(pdf_path_string)
+
+    # Attempt to open the file and store in PDF object
+    pdf_file = open_pdf(pdf_file_path)
+
+    # If open_pdf failed, do not continue
+    if pdf_file == None:
+        return
+
+    # Add PDF to merger instance
+    merger.append(PyPDF2.PdfReader(pdf_file))
+
+    # Debug statement
+    print('Adding PDF to merger instance')
+
+    # Close PDF
+    pdf_file.close()
+
+# Function for choosing and adding pdf to merge instance
+def save_as_pdf_on_click(merger: PyPDF2.PdfMerger) -> None:
+    
+    # Write the merged PDF to a new file
+    output = open('merged.pdf', 'wb')
+    merger.write(output)
+
+
+# Function to be called when the merge button is clicked
+def merge_on_button_click(root) -> None:
+    print('Merge PDFs selected')
+
+    print('Showing merge options')
+
+    # Build merge PDFs dialouge
+    dialog = tk.Toplevel(root)
+    dialog.title("Merge PDFs")
+    dialog.geometry("300x100")
+
+    # Create Merger
+    merger = PyPDF2.PdfMerger()
+
+    # Add Pdf button
+    add_pdf_button = tk.Button(dialog, text="Add PDF", command=lambda:add_pdf_on_click(merger))
+    add_pdf_button.pack(pady=10)
+
+    # Save as Pdf button
+    save_as_PDF = tk.Button(dialog, text="Save as PDF", command=lambda:save_as_pdf_on_click(merger))
+    save_as_PDF.pack(pady=10)
+
+    dialog.grab_set()  # Make the dialog modal
+    root.wait_window(dialog)  # Wait for the dialog to be closed
+
 
 # Create the main window
 root = tk.Tk()
 # Set the title of the window
 root.title("PDF Tools")
 
-root.geometry("500x500")
+root.geometry("400x150")
 
-# Create and add a Merge PDF's button widget with specified text and command
-button = tk.Button(root, text="Delete Pages", command=del_on_button_click)
-# Pack the button widget to add it to the window and set padding
-button.pack(pady=10)
+# Create and add a delete PDF's button widget with specified text and command
+delete_button = tk.Button(root, text="Delete Pages", command=del_on_button_click)
 
+# Create and add a merge PDF's button widget with specified text and command
+merge_button = tk.Button(root, text="Merge Pages", command=lambda:merge_on_button_click(root))
 
+# Pack the button widgets to add it to the window and set padding
+delete_button.pack(pady=10)
+
+merge_button.pack(pady=10)
 
 # Run the main loop to display the window and handle events
 root.mainloop()
